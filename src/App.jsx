@@ -46,6 +46,20 @@ const ChevronRightIcon = (props) => (
   </svg>
 );
 
+// --- Iconos para Menú Hamburguesa ---
+const MenuIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="12" x2="21" y2="12"></line>
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="18" x2="21" y2="18"></line>
+  </svg>
+);
+const XIcon = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
 // --- COMPONENTE: DigimonCard (Tarjeta reutilizable) ---
 const DigimonCard = ({ digimon, onSelect, onToggleFavorite, isFavorite }) => {
   const getLevelColor = (level) => {
@@ -96,29 +110,34 @@ const DigimonCard = ({ digimon, onSelect, onToggleFavorite, isFavorite }) => {
 };
 
 // --- COMPONENTE: Navbar (Navegación) ---
-const Navbar = ({ currentPage, onNavigate }) => {
+const Navbar = ({ currentPage, onNavigate, isMenuOpen, toggleMenu }) => {
   const navItems = [PAGES.HOME, PAGES.FAVORITES, PAGES.SEARCH, PAGES.ORIGINAL, PAGES.INFO];
 
   return (
     <nav className="navbar">
       <div className="navbar-content">
-        <div>
-            <span className="text-xl font-bold cursor-pointer text-white" onClick={() => onNavigate(PAGES.HOME)}>
-              DigiPokedex
-            </span>
+        <span className="text-xl font-bold cursor-pointer text-white" onClick={() => onNavigate(PAGES.HOME)}>
+          DigiPokedex
+        </span>
+
+        {/* Botón de Menú Hamburguesa (solo visible en móvil) */}
+        <button className="menu-toggle" onClick={toggleMenu}>
+          {isMenuOpen ? <XIcon /> : <MenuIcon />}
+        </button>
+
+        {/* Contenedor de enlaces de navegación */}
+        <div className={`nav-links-container ${isMenuOpen ? 'open' : ''}`}>
+          {navItems.map((page) => (
+            <button
+              key={page}
+              onClick={() => onNavigate(page)}
+              className={`nav-button ${currentPage === page ? 'active' : ''}`}
+            >
+              {page}
+            </button>
+          ))}
         </div>
-        <div>
-            {navItems.map((page) => (
-              <button
-                key={page}
-                onClick={() => onNavigate(page)}
-                className={`nav-button ${currentPage === page ? 'active' : ''}`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-        </div>
+      </div>
     </nav>
   );
 };
@@ -149,17 +168,20 @@ const Home = ({ digimons, favorites, onSelectDigimon, onToggleFavorite }) => {
     if (totalPages <= 1) return null;
 
     const pageNumbers = [];
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
+    // Lógica para mostrar solo 3 números de página
+    if (currentPage > 1) {
+        pageNumbers.push(currentPage - 1);
+    }
+    pageNumbers.push(currentPage);
+    if (currentPage < totalPages) {
+        pageNumbers.push(currentPage + 1);
+    }
 
-    if (endPage - startPage + 1 < 5) {
-        if (startPage > 1) startPage = Math.max(1, endPage - 4);
-        if (endPage < totalPages) endPage = Math.min(totalPages, startPage + 4);
-    }
+    // Asegurarse de que no haya duplicados si solo hay 2 páginas
+    const uniquePageNumbers = [...new Set(pageNumbers)];
     
-    for (let i = startPage; i <= endPage; i++) {
-        pageNumbers.push(i);
-    }
+    const showStartEllipsis = uniquePageNumbers[0] > 2;
+    const showEndEllipsis = uniquePageNumbers[uniquePageNumbers.length - 1] < totalPages - 1;
 
     const PageButton = ({ page, children, isActive = false, isDisabled = false, onClick }) => (
         <button
@@ -178,13 +200,13 @@ const Home = ({ digimons, favorites, onSelectDigimon, onToggleFavorite }) => {
                 <ChevronLeftIcon className="w-4 h-4" />
             </PageButton>
 
-            {startPage > 1 && <span className="text-gray-500">...</span>}
+            {showStartEllipsis && <span className="text-gray-500">...</span>}
 
-            {pageNumbers.map(page => (
+            {uniquePageNumbers.map(page => (
                 <PageButton key={page} page={page} isActive={page === currentPage} onClick={() => goToPage(page)} />
             ))}
 
-            {endPage < totalPages && <span className="text-gray-500">...</span>}
+            {showEndEllipsis && <span className="text-gray-500">...</span>}
 
             <PageButton isDisabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>
                 <ChevronRightIcon className="w-4 h-4" />
@@ -490,6 +512,7 @@ export default function App() {
   const [digimons, setDigimons] = useState([]);
   const [selectedDigimon, setSelectedDigimon] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Estado de Firebase/Auth
   const [db, setDb] = useState(null);
@@ -504,6 +527,7 @@ export default function App() {
     setCurrentPage(page);
     setSelectedDigimon(null); // Limpiar detalles al cambiar de página
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsMenuOpen(false); // Cerrar menú al navegar
   };
 
   const handleSelectDigimon = (digimon) => {
@@ -654,7 +678,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans">
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
+      <Navbar 
+        currentPage={currentPage} 
+        onNavigate={handleNavigate} 
+        isMenuOpen={isMenuOpen}
+        toggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+      />
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {renderContent()}
