@@ -343,17 +343,15 @@ const Information = ({ userId }) => {
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-xl font-semibold text-[var(--color-accent-dark)] mb-3">Datos del Desarrollador</h3>
           <p className="text-[var(--color-text-secondary)]">
-            **Desarrollador:** Gemini, el Modelo de Lenguaje Grande.
+            **Desarrollador:** Carlos Eduardo Cruz, Desarrollador Junior y analista de datos.
           </p>
           <p className="text-[var(--color-text-secondary)]">
-            **Contacto:** contact@codespace-apps.com
+            **Contacto:** carlos.cruzr@uniagustiniana.edu.co
           </p>
           <p className="text-sm text-[var(--color-text-secondary)] mt-4">
               **ID de Usuario (Firestore):** <code className="bg-[var(--color-bg)] p-1 rounded text-xs break-all">{userId || 'Cargando...'}</code>
           </p>
-          <p className="text-xs text-[var(--color-danger)] mt-2">
-              Este ID se usa para almacenar tus favoritos en Firestore.
-          </p>
+
         </div>
       </div>
     </div>
